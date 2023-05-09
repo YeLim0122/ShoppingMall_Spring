@@ -1,0 +1,57 @@
+<!DOCTYPE mapper
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+ "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.memo.model.MemoMapper">
+
+	<!-- _int: 기본자료형 int형 alias
+		  int: 클래스형 java.lang.Integer
+	-->
+	 
+	<select id="getTotalCount" resultType="_int">
+		select count(no) from memo
+	</select>
+	
+	<!-- <insert id="insertMemo" parameterType="com.memo.model.MemoVO">
+		insert into memo(no, name, msg, wdate) 
+		values(memo_seq.nextval, #{name}, #{msg}, sysdate)
+		#{name}은 memoVO객체의 getName을 불러옴.
+	</insert> -->
+	
+	<insert id="insertMemo" parameterType="com.memo.model.MemoVO">
+		<selectKey keyProperty="no" resultType="_int" order="BEFORE">
+			select memo_seq.nextval from dual
+		</selectKey>
+		insert into memo(no, name, msg, wdate) 
+		values(#{no}, #{name}, #{msg}, sysdate)
+	</insert>
+	
+	<select id="listMemo" resultType="com.memo.model.MemoVO" parameterType="map">
+		<!-- select * from memo order by no desc -->
+		SELECT * FROM (
+		SELECT row_number() over(ORDER BY no DESC) rn, memo.*
+		FROM memo ORDER BY no DESC)
+		<![CDATA[
+		WHERE rn > #{start} AND rn <= #{end}
+		]]>
+		<!-- xml에서 부등호(<,>)는 태그를 표기하는 문자로 인식될 수 있음.
+			 SQL에서는 비교연산자(>,<)를 사용하므로, xml에서 사용 시 문제가 될 수 있다.
+			 그런 경우, CDATA 섹션으로 감싸주면 부등호를 문자 데이터(CHARACTER DATA)로 인식한다.
+			 <![CDATA[]]>
+		-->
+	</select>
+	
+	<delete id="deleteMemo" parameterType="int">
+		delete from memo where no=#{no}
+	</delete>
+	
+	<select id="getMemo" resultType="Memo" parameterType="int">
+	<!-- alias 지정 com.memo.model.MemoVO = Memo로 별칭 지정함. -->
+		select * from memo where no=#{value}
+		<!-- 파라미터값이 하나이니, value라고 해도 상관없음. -->
+	</select>
+	
+	<update id="updateMemo" parameterType="Memo">
+		update memo set name=#{name}, msg=#{msg} where no=#{no} 
+	</update>
+	
+</mapper>

@@ -1,0 +1,82 @@
+@charset "UTF-8";
+
+body{
+	font-family: Helvetica, sans-serif;
+	font-size: 16px;
+	color: navy;
+}
+
+#wrap{
+	width: 80%;
+	margin: auto;
+}
+
+#wrap table {
+	width: 100%;
+	margin: 2em auto;
+	border-collapse: collapse;
+}
+
+#wrap table th {
+	background-color: rgb(173, 207, 255);
+	color: navy;
+	font-weight: bold;
+	font-size: 2.5ex;
+	height: 50px;
+	/*border: 1px solid gray;*/
+}
+
+#wrap td {
+	/*border: 1px solid gray;*/
+	padding: 5px;
+}
+
+#wrap td:first-child {
+	text-align: center;
+	/*height: 30px;*/
+	color: navy;
+	font-weight: bold;
+	/*font-size: 18px;*/
+}
+
+#wrap td:nth-child(4n+3) {
+	text-align: center;
+}
+
+#wrap td:nth-child(4n+4) {
+	text-align: center;
+}
+
+#wrap input {
+	width: 70%;
+	padding: 8px;
+	margin: 2px;
+	border: 1px solid silver;
+}
+
+#wrap button {
+	width: 30%;
+	padding: 5px;
+	background-color: lightgoldenrodyellow;
+	border: 1px solid lightgray;
+	font-weight: bold;
+}
+
+span.wdate{
+	float: right;
+	margin-right: 10px;
+}
+
+/*
+<style>
+	table { width: 80%; margin: auto; border-collapse: collapse; }
+	th { background-color:rgb(173, 207, 255); color: navy; 
+	     font-weight: bold; font-size: 2.5ex;height: 50px; border: 1px solid gray; }
+	td { border: 1px solid gray; }
+	td:nth-child(1) { text-align: center; height: 40px; color: navy; 
+	                 font-weight: bold; font-size: 18px;}
+	input { width: 70%; padding: 10px; margin: 3px;}
+	button {width: 30%; padding: 5px; background-color:lightgoldenrodyellow; 
+	        border: 1px solid lightgray; font-weight: bold;}
+</style>
+*/

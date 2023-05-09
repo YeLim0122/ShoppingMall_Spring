@@ -1,0 +1,54 @@
+1. 총 게시글 수 :  totalCount (16개)
+2. 한 페이지 당 보여줄 목록 개수:
+       pageSize: 5개
+3. 페이지 수 구하기
+       pageCount (4page)
+
+totalCount	pageSize		pageCount
+1~4,5		5			1
+6~9,10		5			2
+11~14,15		5			3
+16~19,20		5			4
+
+/////////////////////////////////////////
+if(totalCount%pageSize==0)
+	pageCount=totalCount/pageSize;
+else
+	pageCount=totalCount/pageSize +1
+/////////////////////////////////////////////
+==> 1줄로 줄여보자
+pageCount=(totalCount-1)/pageSize+1;
+
+4. JSP에서 pageCount 수만큼 반복문 돌면서
+페이지 링크를 출력한다
+<c:forEach var="i" begin="1" end="${pageCount}">	
+ <li><a href="boardList.do?cpage=${i}">${i}</a></li>
+</c:forEach>
+    		
+==> 이때 현재 보여줄 페이지(cpage)값을 query string
+으로 전달한다		
+
+5. cpage를 이용해서 DB에서 끊어올 데이터 범위를 정한다
+
+select * from (
+select rownum rn, A.* from
+(select * from board order by num desc) A )
+where rn between 1[start] and 5[end];
+----------------------------------------------------
+cpage       pageSize        start       end
+1               5           	1           5
+2               5          	 6           10
+3               5           	11          15
+4               5           	16          20    
+-------------------------------------------------
+end = cpage * pageSize
+start= end - (pageSize-1)
+
+6. BoardDAO에 start, end값 넘겨서 subquery이용해서
+현재 보여줄 페이지에 해당하는 데이터만 가져온다
+
+
+
+
+
+
