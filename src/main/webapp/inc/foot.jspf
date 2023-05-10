@@ -1,11 +1,16 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
     pageEncoding="UTF-8"%>
 
-    
-</div>	<!-- .container end -->
+<style>
+	#content .jumbotron, #content .navbar {
+		display: none;
+	}
+</style>    
+
+</div>	<!-- .container #content end -->
 
     <!-- footer ------------------------- -->
-    <div class="jumbotron text-center" style="margin-bottom:0">
+    <div class="jumbotron text-center" style="margin-bottom:0; margin-top: 10px;">
         <h2>footer</h2>
     </div>
     
