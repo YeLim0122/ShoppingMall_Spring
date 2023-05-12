@@ -10,9 +10,14 @@
 		</layout>
 	</appender>
 	
-	<!-- Application Loggers -->
+	<!-- Application Loggers 
+			로그 레벨: debug > info > warn > error
+	-->
 	<logger name="com.my.myapp">
 		<level value="info" />
+	</logger>
+	<logger name="com.my.mapper">
+		<level value="debug" />
 	</logger>
 	<logger name="com.common">
 		<level value="info" />

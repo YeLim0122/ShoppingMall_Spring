@@ -60,7 +60,8 @@
 									<td>
 										<input type="number" name="pqty" id="pqty${state.index}"
 										value="${item.pqty}" min="1" max="50">
-										<button class="btn btn-success" onclick="">수정</button>
+										<button type="button" class="btn btn-success" 
+										onclick="cartEdit('${item.cartNum}', '${state.index}')">수정</button>
 									</td>
 									<td>
 										<fmt:formatNumber value="${item.saleprice}" 
@@ -97,13 +98,14 @@
 							<button type="button" class="btn btn-outline-info" onclick="goOrder()">주문하기</button>
 							<button type="button" class="btn btn-outline-danger" onclick="location.href='../index'">
 								계속 쇼핑하기
-							</button>							
+							</button>
+							<button type="button" class="btn btn-outline-success" onclick="cartDelAll()">전체 삭제</button>							
 						</td>
 					</tr>
 				</tbody>
 			</table>
 		</form>
-		<!-- 주문 form -------------------- -->
+		<!-- 주문 form end -------------------- -->
 		
 		<!-- 삭제 form -------------------- -->
 		<form name="df" action="cartDel">
@@ -111,15 +113,42 @@
 		</form>
 		<!-- 삭제 form end----------------- -->
 		
+		<!-- 수정 form ------------------------ -->
+		<form name="ef" action="cartEdit">
+			<input type="hidden" name="cartNum">
+			<input type="hidden" name="pqty">
+		</form>
 		
 	</div>
 </div>
 
 <script>
+	function cartDelAll() {
+		let yn = confirm('장바구니 상품을 모두 삭제할까요?');
+		if(yn) {
+			location.href='delCartAll';
+		}
+	}
+
+	function cartEdit(cnum, i) {
+		// alert(cnum+" / "+i);
+		let qty = $('#pqty'+i).val();
+		// alert(qty);	// 수정된 수량
+		
+		ef.cartNum.value = cnum;
+		ef.pqty.value = qty;
+		ef.method='post';
+		ef.submit();
+	}
+
 	function cartDel(cnum){
 		// alert(cnum)
-		df.cartNum.value = cnum;
-		df.method = 'post';
-		df.submit();
+		let yn = confirm('정말 삭제할까요?');
+		if(yn) {
+			df.cartNum.value = cnum;
+			df.method = 'post';
+			df.submit();
+		}
+		
 	}
 </script>

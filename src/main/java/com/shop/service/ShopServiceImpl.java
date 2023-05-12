@@ -67,8 +67,17 @@ public class ShopServiceImpl implements ShopService {
 
 	@Override
 	public int editCart(CartVO cartVo) {
-		// TODO Auto-generated method stub
-		return 0;
+		// 수량에 따라 로직 처리
+		int qty = cartVo.getPqty();
+		if (qty == 0) {	// 수량이 0이면 삭제 처리
+			return cartMapper.delCart(cartVo.getCartNum());
+		} else if (qty < 0) {
+			throw new NumberFormatException("잘못된 값입니다.");
+		} else if (qty > 50) {
+			throw new NumberFormatException("수량은 50개 이하로만 수정 가능합니다.");
+		} else {
+			return cartMapper.editCart(cartVo);
+		}
 	}
 
 	@Override
@@ -85,8 +94,8 @@ public class ShopServiceImpl implements ShopService {
 
 	@Override
 	public int delCartAll(CartVO cartVo) {
-		// TODO Auto-generated method stub
-		return 0;
+
+		return cartMapper.delCartAll(cartVo.getIdx_fk());
 	}
 
 	@Override

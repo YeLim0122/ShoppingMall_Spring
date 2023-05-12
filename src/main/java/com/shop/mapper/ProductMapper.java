@@ -2,6 +2,7 @@ package com.shop.mapper;
 
 import java.util.List;
 
+import com.shop.model.CategoryVO;
 import com.shop.model.ProductVO;
 
 public interface ProductMapper {
@@ -14,5 +15,11 @@ public interface ProductMapper {
 	List<ProductVO> selectByPspec(String pspec);
 	List<ProductVO> selectByCategory(int cg_code);
 	ProductVO selectByPnum(int pnum);
+	
+	// 상위 카테고리 목록 가져오기
+	List<CategoryVO> getUpCategory();
+	
+	// 상위 카테고리에 해당하는 하위 카테고리 목록 가져오기
+	List<CategoryVO> getDownCategory(int upCg_code);
 
 }

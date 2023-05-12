@@ -1,0 +1,12 @@
+num
+3  세번째 글   [refer: 3, lev: 0, sunbun:0 ]
+     +--[RE] 세번째 글 [refer:3, lev:1, sunbun: 1]
+     +--[RE] 세번째 글 [refer:3, lev:1, sunbun: 2]	
+
+	select * from spring_board order by refer desc, sunbun asc
+
+2 두번째 글   [refer: 2, lev: 0, sunbun:0 ]
+     +--[RE] 두번째 글  [refer: 2, lev: 1, sunbun:1 ]
+	+--[RE][RE] 두번째 글[refer: 2, lev: 2, sunbun:1 ]
+
+1 첫번째 글  [refer: 1, lev: 0, sunbun:0 ]

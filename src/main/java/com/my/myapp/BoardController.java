@@ -1,0 +1,269 @@
+package com.my.myapp;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+import javax.annotation.Resource;
+import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.board.model.BoardVO;
+import com.board.service.BoardService;
+import com.common.CommonUtil;
+
+import lombok.extern.log4j.Log4j;
+
+@Controller
+@RequestMapping("/board")
+@Log4j
+public class BoardController {
+	
+	@Resource(name="boardService")	// serviceimpl의 service이름과 같아야 함.
+	private BoardService boardService;
+
+	@Autowired
+	private CommonUtil util;
+	
+	@GetMapping("/write")
+	public String boardForm() {
+		
+		return "board/boardWrite";
+	}
+	
+	
+	@PostMapping("/write")
+	public String boardInsert(Model m, @ModelAttribute BoardVO board,
+							@RequestParam("mfilename") MultipartFile mf,
+							HttpServletRequest req) {
+		log.info("board: "+board);
+		
+		// 1. 파일 업로드 처리
+		// 1) 업로드 디렉토리 절대경로 얻기 (resources/board_upload)
+		ServletContext ctx = req.getServletContext();
+		String upDir = ctx.getRealPath("/resources/board_upload");
+		File dir = new File(upDir);
+		if (!dir.exists())	{
+			dir.mkdirs();	// 업로드 디렉토리 생성
+		}
+		
+		// 세션으로 얻어올 경우 (파라미터에 세션 추가)
+		// ServletContext app = session.getServletContext();
+		
+		// 2) 업로드 파일명과 파일크기 알아내기 => board에 setFilename(파일명), setFilesize(파일크기)
+		if (!mf.isEmpty()) { 	// 첨부파일이 있다면
+			
+			UUID uid = UUID.randomUUID(); 
+			String uidStr = uid.toString();
+			
+			String originFile = mf.getOriginalFilename(); 
+			long filesize = mf.getSize(); 
+			String filename = uidStr+"_"+originFile;
+			
+			log.info("originFile: "+originFile+" / filesize: "+filesize+
+					"filename: "+filename);
+			
+			board.setFilename(filename);
+			board.setFilesize(filesize);
+			board.setOriginFilename(originFile);
+		 
+			
+			// 3) 파일 업로드 처리
+			try {
+				mf.transferTo(new File(upDir, filename));
+				log.info("upDir: "+upDir);
+			} catch(IOException e) {
+				log.error("업로드 실패: "+e);
+			}
+			
+			// 4) mode가 edit이고 예전에 첨부했던 파일이 있다면 => 이전 첨부파일 삭제 처리
+			if (board.getMode().equals("edit") && board.getOld_filename() != null) {
+				File df = new File(upDir, board.getOld_filename());
+				if (df.exists()) {
+					boolean b = df.delete();
+					log.info("old file delete: "+b);
+				}
+							
+			}	// if -----------------
+		
+		}
+		log.info("board: "+board);
+		
+		// 2. 유효성 체크 (제목, 작성자, 비번) => write로 redirect 이동
+		if (board.getSubject()==null || board.getUserid()==null || 
+			board.getPasswd()==null || board.getSubject().trim().isEmpty() || 
+			board.getUserid().trim().isEmpty() || board.getPasswd().trim().isEmpty()) {
+			
+			return "redirect:write";
+		}
+		
+		// 3. boardService의 insertBoard() 호출
+		int n = 0;
+		String str="";
+		
+		if ("write".equals(board.getMode())) {
+			// 비밀번호 암호화 처리
+			
+			n = boardService.insertBoard(board);
+			str = "글 쓰기 ";
+		}
+		else if("edit".equals(board.getMode())) {
+			// 수정 처리
+			str ="글 수정 ";
+			n = boardService.updateBoard(board);
+			
+		}
+		else if ("rewrite".equals(board.getMode())) {
+			// 답변 쓰기
+			str = "답변 쓰기 ";
+			n = boardService.rewriteBoard(board);
+		}
+		
+		// 4. 그 결과 메시지, 이동경로 처리
+		str += (n>0)?"성공":"실패";
+		String loc = (n>0)? "list":"javascript:history.back()";
+		
+		return util.addMsgLoc(m, str, loc);
+	}	// boardInsert() ------------------
+	
+	
+	@GetMapping("/list")
+	public String boardList(Model m, @RequestParam(defaultValue="1") int cpage) {
+		log.info("cpage: "+cpage);
+		if (cpage < 1) {
+			cpage=1;	// 첫 페이지로 설정
+		}
+		
+		// 1. 총 게시글 수 가져오기
+		int totalCount = boardService.getTotalCount();
+		
+		int pageSize = 5;
+		int pageCount = (totalCount-1)/pageSize +1;
+		
+		if (cpage > pageCount) {
+			cpage=pageCount;	// 마지막 페이지로 설정
+		}
+		
+		int start = (cpage-1)*pageSize;
+		int end = cpage*pageSize +1;
+		
+		Map<String, Integer> map = new HashMap<>();
+		map.put("start", start);
+		map.put("end", end);
+		
+		// 2. 게시글 목록 가져오기
+		List<BoardVO> boardArr = this.boardService.selectBoardAll(map);
+		
+		m.addAttribute("totalCount", totalCount);
+		m.addAttribute("boardArr", boardArr);
+		
+		m.addAttribute("pageCount", pageCount);
+		m.addAttribute("cpage", cpage);
+		
+		return "board/boardList";
+	}
+	
+	// Path 접근방식으로 데이터를 넘길 경우
+	@GetMapping("/view/{num}")
+	public String boardView(Model m, @PathVariable("num") int num) {
+		log.info("num: "+num);
+		
+		// 1. 조회수 증가
+		this.boardService.updateReadnum(num);
+		
+		// 2. 글번호로 해당 글 가져오기
+		BoardVO vo = this.boardService.selectBoardByIdx(num);
+		
+		m.addAttribute("board", vo);
+		
+		return "board/boardView";
+	}
+	
+	@PostMapping("/delete")
+	public String boardDelete(Model m, @RequestParam(defaultValue="0") int num,
+							@RequestParam(defaultValue="") String passwd,
+							HttpSession session) {
+		log.info("num: "+num+" / passwd: "+passwd);
+		if (num==0 || passwd.isEmpty()) {
+			return "redirect:list";
+		}
+		
+		// 해당 글을 db에서 가져오기
+		BoardVO vo = this.boardService.selectBoardByIdx(num);
+		
+		// 비밀번호 체크
+		String dbPasswd = vo.getPasswd();
+		if (!dbPasswd.equals(passwd)) {
+			return util.addMsgBack(m, "비밀번호가 일치하지 않아요.");
+		}
+		
+		// db에서 글 삭제 처리
+		int n = boardService.deleteBoard(num);
+		String upDir = session.getServletContext().getRealPath("/resources/board_upload");
+		
+		// 서버에 첨부한 파일이 있다면 서버에서 삭제처리
+		if (n>0 && vo.getFilename()!=null) {
+			File f = new File(upDir, vo.getFilename());
+			if (f.exists()) {
+				boolean b = f.delete();
+				log.info("파일 삭제 여부: "+b);
+			}
+		}
+		
+		String str = (n>0)?"삭제 성공":"삭제 실패";
+		String loc = (n>0)?"list":"javascript:history.back()";
+		
+		return util.addMsgLoc(m, str, loc);
+	}
+	
+	
+	// 수정 폼 보여주기
+	@PostMapping("/edit")
+	public String boardEditForm(Model m, @ModelAttribute BoardVO vo) {
+		log.info("vo: "+vo);
+		if (vo.getNum()==0 || vo.getPasswd()==null) {
+			return "redirect:list";
+		}
+		BoardVO dbVo = this.boardService.selectBoardByIdx(vo.getNum());
+		if (dbVo==null) {
+			return util.addMsgBack(m, "해당 글은 없습니다.");
+		}
+		
+		// 비밀번호 체크 
+		if (!dbVo.getPasswd().equals(vo.getPasswd())) {
+			return util.addMsgBack(m, "비밀번호가 일치하지 않아요.");
+		}
+		
+		m.addAttribute("board", dbVo);
+		
+		return "board/boardEdit";
+	}
+	
+	
+	// 답변 글 쓰기
+	@PostMapping("/rewrite")
+	public String boardRewriteForm(Model m, @ModelAttribute BoardVO vo) {
+		log.info("vo: "+vo);
+		m.addAttribute("num", vo.getNum());	// 부모 글의 글번호
+		m.addAttribute("subject", vo.getSubject());	// 제목
+		
+		return "board/boardRewrite";
+	}
+	
+	
+}
