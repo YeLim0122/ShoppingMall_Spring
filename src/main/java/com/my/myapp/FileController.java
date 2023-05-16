@@ -1,18 +1,27 @@
-package com.common.file;
+package com.my.myapp;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.List;
 import java.util.UUID;
 
 import javax.annotation.Resource;
+import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
@@ -135,5 +144,69 @@ public class FileController {
 		
 		return "file/fileResult";
 	}
+	
+	
+	/* 데이터와 함께 헤더 상태 메시지를 전달하고자 할때 사용한다.
+	 * Http Header를 다뤄야 할 경우 ResponseEntity를 통해 헤더정보나 데이터를 전달할 수 있다.
+	 * HttpEntity를 상속받아 구현한 클래스
+	 * - RequestEntity : 요청 헤더정보+요청 데이터
+	 * - ResponseEntity(HttpStatus, HttpHeaders, HttpBody를 포함함): 응답 헤더정보+ 응답 데이터
+	 * 
+	 * 브라우저는 컨텐트타입이 보여줄 수 있는 형식이면 브라우저에 보여주고,
+	 * 잘 모르는 컨텐트타입이거나 보여줄 수 있는 형식이 아니면 다운로드 창을 띄운다. 
+	 * */
+	
+	@PostMapping(value="/fileDown", produces="application/octet.stream")
+	@ResponseBody
+	public ResponseEntity<org.springframework.core.io.Resource> fileDownload(
+			HttpServletRequest req,
+			@RequestHeader("User-Agent") String userAgent,
+			@RequestParam("fname") String fname,
+			@RequestParam("origin_fname") String origin_fname) {
+		
+		log.info("fname: "+fname);
+		log.info("origin_fname: "+origin_fname);
+		
+		// 1. 업로드된 디렉토리의 절대경로 얻기
+		ServletContext app = req.getServletContext();
+		String upDir = app.getRealPath("/resources/board_upload");
+		
+		String filePath = upDir+File.separator+fname;
+		log.info("filePath: "+filePath);
+		
+		org.springframework.core.io.Resource resource = new FileSystemResource(filePath);	
+		
+		// 2. FileSystemResource 객체 생성해서 파일의 절대경로 정보를 넘긴다.
+		// 		==> 알아서 파일과 스트림 연결해서 다운로드 함.
+		if (!resource.exists()) {
+			// 해당 파일이 없다면
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);	// 404
+		}
+		
+		// 2_2. 브라우저별 인코딩 처리
+		String downName = null;
+		boolean checkIE = (userAgent.indexOf("MSIE")>-1||userAgent.indexOf("Trident")>-1);
+		// ie인 경우 TRUE값 할당
+		try {
+			if (checkIE) {
+				// IE인 경우
+				downName = URLEncoder.encode(origin_fname, "UTF-8").replaceAll("\\+", " ");
+			} else {
+				// 그외 브라우저인 경우
+				origin_fname = origin_fname.replace(",", "");	
+				// 크롬은 파일명에 콤마(,)가 있으면 다운로드 되지 않음
+				downName = new String (origin_fname.getBytes("UTF-8"), "ISO-8859-1");
+			}
+		} catch(UnsupportedEncodingException e) {
+			log.error("파일 다운로드 중 에러: "+e);
+		}
+		// 3. HttpHeader 통해 헤더 정보 설정해서 ResponseEntity에 담아 반환함
+		HttpHeaders headers = new HttpHeaders();
+		headers.add("Content-Disposition", "attachment; filename="+downName);
+		
+		return new ResponseEntity<>(resource, headers, HttpStatus.OK);	// 200
+		
+	}
+	
 
 }

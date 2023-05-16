@@ -58,7 +58,7 @@ jstl: core, fmt, function
 					<%-- <a href="${pageContext.request.contextPath}/resources/board_upload/
 						<c:out value="${board.filename}" />"download>	<!-- a태그 --> --%>
 						
-						<a href="#" onclick="goDown()">
+					<a href="#" onclick="goDown()">
 						<c:out value="${board.originFilename}"/>
 					</a>
 					[ <c:out value="${board.filesize}" /> ] bytes			

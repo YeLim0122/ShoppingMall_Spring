@@ -43,6 +43,29 @@
 		select count(num) from spring_board
 	</select>
 	
+	<!-- 검색 시 사용할 where절을 findWhere라는 id로 등록한 뒤 재사용하자 -->
+	<sql id="findWhere">
+		<if test="findType != null and findKeyword != ''">
+			<where>
+				<if test="findType == 1">	<!-- 제목 검색 -->
+					subject like '%' || #{findKeyword} || '%'
+				</if>
+				<if test="findType == 2">	<!-- 작성자 검색 -->
+					userid like '%' || #{findKeyword} || '%'
+				</if>
+				<if test="findType == 3">	<!-- 내용 검색 -->
+					content like '%' || #{findKeyword} || '%'
+				</if>
+			</where>
+		</if>
+	</sql>
+	
+	<!-- 총 게시글 수, 검색한 총 게시글 수 가져오기 -->
+	<select id="getTotalCountPaging" resultType="_int" parameterType="Paging">
+		select count(num) from spring_board 
+		<include refid="findWhere" />
+	</select>
+	
 	<!-- 조회수 증가 -->
 	<update id="updateReadnum" parameterType="_int">
 		update spring_board set readnum = readnum+1 where num=#{value}
@@ -103,5 +126,18 @@
 							sunbun: 부모sunbun+1			
 				-->
 	</insert>
+	
+	<!-- 게시글 목록 가져오기 (PagingVO) -->
+	<!-- select * from spring_board order by refer desc, sunbun asc -->
+	<select id="selectBoardAllPaging" resultType="Board" parameterType="Paging">
+		select * from (
+		select row_number() over(order by refer desc, sunbun asc) rn, spring_board.* 
+		from spring_board
+		<include refid="findWhere" />
+		)
+		<![CDATA[
+			where rn > #{start} and rn < #{end}
+		]]>
+	</select>
 	
 </mapper>

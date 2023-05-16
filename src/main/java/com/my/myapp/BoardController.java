@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.board.model.BoardVO;
+import com.board.model.PagingVO;
 import com.board.service.BoardService;
 import com.common.CommonUtil;
 
@@ -118,7 +119,7 @@ public class BoardController {
 		
 		if ("write".equals(board.getMode())) {
 			// 비밀번호 암호화 처리
-			
+			// for(int i=0; i<20; i++)
 			n = boardService.insertBoard(board);
 			str = "글 쓰기 ";
 		}
@@ -143,6 +144,37 @@ public class BoardController {
 	
 	
 	@GetMapping("/list")
+	public String boardListPaging(Model m, HttpServletRequest req,
+								@ModelAttribute PagingVO page) {
+		HttpSession session = req.getSession();
+		
+		// 1. 총 게시글 수 가져오기 or 검색한 게시글 수 가져오기
+		int totalCount = this.boardService.getTotalCount(page);
+		page.setTotalCount(totalCount);
+		// page.setPageSize(10);		
+		page.setPagingBlock(10);		// 페이징 블럭 단위 값: 5
+		
+		page.init(session);		// 페이징 관련 연산을 수행하는 메소드 호출
+		
+		log.info("page: "+page);
+		
+		// 2. 게시글 목록 가져오기 or 검색한 게시글 목록 가져오기
+		List<BoardVO> boardArr = this.boardService.selectBoardAllPaging(page);
+		String myctx = req.getContextPath();
+		String loc = "board/list";
+		
+		// 3. 페이지 네비게이션 문자열 받아오기
+		String pageNavi = page.getPageNavi(myctx, loc);
+		
+		m.addAttribute("paging", page);
+		m.addAttribute("boardArr", boardArr);
+		m.addAttribute("pageNavi", pageNavi);
+		
+		return "board/boardList3";
+	}
+	
+	
+	@GetMapping("/list_old")
 	public String boardList(Model m, @RequestParam(defaultValue="1") int cpage) {
 		log.info("cpage: "+cpage);
 		if (cpage < 1) {
@@ -176,7 +208,8 @@ public class BoardController {
 		m.addAttribute("cpage", cpage);
 		
 		return "board/boardList";
-	}
+	}	// list ---------------------
+	
 	
 	// Path 접근방식으로 데이터를 넘길 경우
 	@GetMapping("/view/{num}")

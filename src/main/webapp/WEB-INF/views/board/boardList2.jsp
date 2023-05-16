@@ -80,18 +80,40 @@
 				<tr>
 					<td colspan="3" class="text-center">
 						<ul class="pagination justify-content-center">
-							<c:forEach var="i" begin="1" end="${pageCount}">
-								<li class="page-item <c:if test="${i eq cpage}">active</c:if>">
-								<a class="page-link" href="list?cpage=<c:out value="${i}" />">
-									<c:out value="${i}" />
-								</a>
+							<!-- prevBlock --------------------------- -->
+							<c:if test="${paging.prevBlock>0}">
+								<li class="page-item">
+									<a class="page-link" 
+									href="list?cpage=<c:out value="${paging.prevBlock }" />">Prev</a>
 								</li>
+							</c:if>
+							
+							<!-- 페이지 번호 ----------------------- -->
+							<c:forEach var="i" begin="${paging.prevBlock+1}" end="${paging.nextBlock-1}">
+								<c:if test="${i <= paging.pageCount}">
+									<li class="page-item <c:if test="${i eq paging.cpage}">active</c:if>">
+									<a class="page-link" href="list?cpage=<c:out value="${i}" />">
+										<c:out value="${i}" />
+									</a>
+									</li>
+								</c:if>
 							</c:forEach>
+							
+							<!-- nextBlock --------------------- -->
+							<c:if test="${paging.nextBlock <= paging.pageCount}">
+								<li class="page-item">
+									<a class="page-link" 
+									href="list?cpage=<c:out value="${paging.nextBlock }" />">Next</a>
+								</li>
+							</c:if>
+							
 						</ul>
 					</td>
 					<td colspan="2">
-						총 게시글 수:<span class="text-primary"> ${totalCount} 개</span><br>
-						<span class="text-danger">cpage</span>/ 페이지 수 pages
+						총 게시글 수:<span class="text-primary"> <c:out value="${paging.totalCount }" /> 개</span><br>
+						<span class="text-danger">
+							<c:out value="${paging.cpage }" />
+						</span>/ <c:out value="${paging.pageCount}" /> pages
 					</td>
 					
 				</tr>

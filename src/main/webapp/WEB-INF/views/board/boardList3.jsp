@@ -5,11 +5,53 @@
 <div class="row my-3">
 	<div class="col-12 text-center">
 		<h2>Spring Board</h2>
+		<c:if test="${paging.findType ne null and paging.findType ne ''}">
+			<h3class="text-center text-secondary">검색어: <c:out value="${paging.findKeyword}" /></h3>
+		</c:if>
 		<p>
 			<a href="write">글쓰기</a>|<a href="list">글 목록</a>
 		</p>
 	</div>
 </div>
+
+<!-- 검색 폼 시작 ------------------------------------- -->
+<div class="row my-3">
+	<div class="col-9 text-center">
+		<form name="searchF" action="list" onsubmit="return board_check()">
+		<!-- ---------------------------------------------------- -->
+			<input type="hidden" name="pageSize" value="${pageSize}">
+			<input type="hidden" name="cpage" value="${paging.cpage}">
+		<!-- ---------------------------------------------------- -->
+			<select name="findType" style="padding: 6px">
+				<option value="">::검색 유형::</option>
+				<option value="1" <c:if test="${paging.findType eq 1}">selected</c:if> >제목</option>
+				<option value="2" <c:if test="${paging.findType eq 2}">selected</c:if> >작성자</option>
+				<option value="3" <c:if test="${paging.findType eq 3}">selected</c:if> >내용</option>
+			</select>
+			
+			<input type="text" name="findKeyword" placeholder="검색어를 입력하세요."
+			autofocus="autofocus" style="width: 50%; padding: 5px">
+			<button class="btn btn-outline-primary">검색</button>
+		</form>
+	</div>
+	<div class="col-3 text-left">
+		<form name="psF" action="list">
+		<!-- ------------------------------------- -->
+			<input type="hidden" name="cpage" value="${paging.cpage}">
+			<input type="hidden" name="findType" value="${paging.findType}">
+			<input type="hidden" name="findKeyword" value="${paging.findKeyword}">
+		<!-- ------------------------------------- -->
+			<select name="pageSize" style="padding: 6px" onchange="submit()">
+				<option value="">::페이지 사이즈::</option>
+				<c:forEach var="ps" begin="5" end="20" step="5">
+					<option value="${ps}" <c:if test="${ps eq pageSize}">selected</c:if> >
+						페이지 사이즈 ${ps}</option>
+				</c:forEach>
+			</select>
+		</form>
+	</div>
+</div>
+<!-- ----------------------------------------------- -->
 
 <div class="row">
 	<div class='col-10 offset-1'>
@@ -79,19 +121,13 @@
 			<tfoot>
 				<tr>
 					<td colspan="3" class="text-center">
-						<ul class="pagination justify-content-center">
-							<c:forEach var="i" begin="1" end="${pageCount}">
-								<li class="page-item <c:if test="${i eq cpage}">active</c:if>">
-								<a class="page-link" href="list?cpage=<c:out value="${i}" />">
-									<c:out value="${i}" />
-								</a>
-								</li>
-							</c:forEach>
-						</ul>
+						${pageNavi}
 					</td>
 					<td colspan="2">
-						총 게시글 수:<span class="text-primary"> ${totalCount} 개</span><br>
-						<span class="text-danger">cpage</span>/ 페이지 수 pages
+						총 게시글 수:<span class="text-primary"> <c:out value="${paging.totalCount }" /> 개</span><br>
+						<span class="text-danger">
+							<c:out value="${paging.cpage }" />
+						</span>/ <c:out value="${paging.pageCount}" /> pages
 					</td>
 					
 				</tr>
